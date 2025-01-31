@@ -18,7 +18,7 @@
 
 import numpy as np
 import random
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import csv
 from data_func import *
 #from RandomFlow import *
@@ -49,54 +49,61 @@ def simulationOP(filename, T, DEBUG=True):
         print('\nBuilding Models\n')
 
         dataIS, isStart, isEnd = getData(filename, "&inti")
-        #dataCapa, capaStart, capaEnd = getData(filename, "&capa")
+        dataP, pStart, pEnd = getData(filename, "&p")
         #dataBLD, bldStart, bldEnd = getData(filename, "&bld")
         dataWP, wpStart, wpEnd = getData(filename, "&prob")
 
         print(dataIS)
         print(dataWP)
+        print(dataP)
 
         Num_X=np.size(dataIS)
         Num_R=Num_X-1
 
         matrixIS=readFloatArray(dataIS, Num_R, 1)
+        if matrixIS.shape[0]!=Num_R:
+            print('\nError with matrixIS\n')
+                
         matrixWP=readFloatArray(dataWP, Num_R, Num_R)
-
-
         # %%%% Input parameter check
         if np.shape(matrixWP)!= (Num_R, Num_R):
             print('\nError on input parameter\n')
-            
-        if matrixIS.shape[0]!=Num_R:
-            print('\nError with matrixIS\n')
+
+        if dataP:
+            matrixP=readFloatArray(dataP, Num_R, 1)
+            if matrixP.shape[0]!=Num_R:
+                print('\nError with matrixP\n')
 
         print(matrixWP)
         print(matrixIS)
+        if dataP:
+            print(matrixP)
 
         f = open("out.txt", "w+")
 
         f.write("matrixWP\n"+str(matrixWP)+"\n")
         f.write("matrixIS\n"+str(matrixIS)+"\n")
         f.write("Number of Agents:"+str(Num_R))
+        if dataP:
+            f.write("matrixP\n"+str(matrixP)+"\n")
         #f.wrtie("dimension of matrixCapa"+str(np.shape(matrixCapa)))
         #f.wrtie("maximal element in matrixCapa"+str(np.max(matrixCapa)))
 
         temp=arr1D_2D(dataIS)
-        NameLocation =np.transpose(temp)[0,1:]
-        #NameLocation=['E1', 'E2', 'H1', 'H2', 'H3', 'O1', 'O2', 'O3', 'L1', 'L2', 'L3']
-        #BLD_Index_Room=cellstr(NameLocation);   %Colomn Vector
+        NameAgent =np.transpose(temp)[0,1:]
+        #NameAgent=['E1', 'E2', 'H1', 'H2', 'H3', 'O1', 'O2', 'O3', 'L1', 'L2', 'L3']
+        #BLD_Index_Room=cellstr(NameAgent);   %Colomn Vector
 
         #temp=arr1D_2D(dataCapa)
         #NamePassage =temp[0,1:]
         #NamePassage=['H1->E1', 'H3->E2', 'O1->H1', 'O2->H2', 'O3->H3', 'L1->H1', 'L2->H2', 'L3->H3', 'H2->H1', 'H2->H3', 'O2->O1', 'O2->O3', 'L2->L1']
         #BLD_Index_Path=cellstr(NamePassage);   %Colomn Vector
 
-        print(NameLocation)
+        print(NameAgent)
         #print(NamePassage)
-        print("Some Testing Cases:")
+        #print("Some Testing Cases:")
 
-
-        if DEBUG and sys.version_info[0] == 2: 
+        if DEBUG and sys.version_info[0] == 2:
             raw_input('Please check input data here!')
         if DEBUG and sys.version_info[0] == 3:
             input('Please check input data here!')
@@ -111,10 +118,9 @@ def simulationOP(filename, T, DEBUG=True):
 
         X[:,0] = matrixIS.reshape((1,-1))
 
-        numOfPeople = len(matrixIS)
-        print("Number of People:", numOfPeople)
-
-        print("Initial State of the Model")
+        numOfAgent = len(matrixIS)
+        print("Number of Agent:", numOfAgent)
+        print("Initial State of Agents")
         print(X[:,0])
         print(matrixIS)
 
@@ -122,7 +128,15 @@ def simulationOP(filename, T, DEBUG=True):
         #MovCompDir = np.zeros((Num_R, Num_P))
         #MovCompInter = np.zeros((Num_R, Num_P))
 
-
+        eigval, eigvec  = np.linalg.eig(matrixWP)
+        for i in range(len(eigval)):
+            print('eigen_value:', eigval[i])
+            print("eigen_vector:", eigvec[:,i])
+            
+        print("----------------------------")
+        print("eigen_values:", eigval)
+        print("----------------------------")
+        
         if DEBUG and sys.version_info[0] == 2: 
             print >> f, "Initial State: X[:,0]\n", X[:,0], "\n"
         if DEBUG and sys.version_info[0] == 2: 
@@ -150,61 +164,16 @@ def simulationOP(filename, T, DEBUG=True):
                     #if np.fabs(X[i,t])>1E-2:
                     sum = sum + matrixWP[i,j]*X[j,t]
                 X[i,t+1]=sum
-                
 
-            '''
-            # Check the math model: 
-            # Is the flow generated correct?  We need to check it
-            for i in range(0, Num_R):
-                if np.sum(MovComp[i,:])>X[i,t]:
-                    print("!!!!!!!!!!!!!!!")
-                    print("error found here! About MovComp")
-                    print("Flow generated exceeds the source!")
-                if np.sum(MovCompInter[i,:])>X[i,t]:
-                    print("!!!!!!!!!!!!!!!")
-                    print("error found here! About MovCompInter")
-                    print("Flow generated exceeds the source!")
-                if np.sum(matrixWP[i,:])>1:
-                    print("!!!!!!!!!!!!!!!")
-                    print("error found here! About matrixWP")
-                    print("Flow generated exceeds the source!")
-                    print("error location:", i)
-
-
-            print("Movement Information:")
-            print("MovComp: \n", MovComp)
-            print("MovCompDir: \n", MovCompDir)
-            print("MovCompInter: \n", MovCompInter)
-            print("Mov[:,t]: \n", Mov[:,t])
-            
-            f.write("MovComp: \n"+str(MovComp)+"\n")
-            f.write("MovCompDir: \n"+str(MovCompDir)+"\n")
-            f.write("MovCompInter: \n"+str(MovCompInter)+"\n")
-            f.write("Mov[:,t]: \n"+str(Mov[:,t])+"\n")
-            f.write("MovSource[:,t]: \n"+str(MovSource[:,t])+"\n")
-
-
-            #for j in range(0, Num_P-1):
-            #    if Mov[j,t] > matrixCapa[0,j]:
-            #	Mov[j,t] = matrixCapa[0,j]
-            #	print "print here to show that this line is being run"
-            #	print "********************"
-            #	print "********************"
-
-
-            #X = X + BLD*Mov
-            X[:,t+1] = X[:,t] + np.dot(matrixBLD, Mov[:,t])
-
-            '''
 
             #print "Movement integrated from the above matrix", Mov[:,t]
             print("X[t]:", X[:,t])
             print("X[t+1]:", X[:,t+1])
             #print("number of evacuees", np.sum(X[:,t]))
 
+            # Record opinions of agents in output data files: 
             f.write("X[t]:"+str(X[:,t])+"\n")
             f.write("X[t+1]:"+str(X[:,t+1])+"\n")
-            #f.write("number of evacuees"+str(np.sum(X[:,t]))+"\n")
 
         f.close()
 
@@ -215,16 +184,28 @@ def simulationOP(filename, T, DEBUG=True):
         np.save("dataResult.npy", X)
         #plt.figure('data')
         for i in range(Num_R):
-            plt.plot(X[i,:])
+            plt.plot(X[i,:], linewidth=2.0, label=str(i+1))
+            plt.text(0,X[i,0], str(i), fontsize=18)
+            
+        (xDim, tDim)=np.shape(X)
+        timeline = np.linspace(0, tDim)
+        plt.plot(timeline, timeline, linewidth='3.0', linestyle='-.')
+        plt.title("Plot of Opinion Model")
+        plt.xlabel("t" ) #, fontsize = 15)
+        plt.ylabel("tpre") #, fontsize = 15)
+        plt.grid()
+        plt.legend(loc='best')
+        #plt.ylim(0,7)
         plt.show()
+        
         temp=filename.split('.')
-        fnamePNG = temp[0]+'_exitprob.png'
+        fnamePNG = temp[0]+'_opinion_plot.png'
         plt.savefig(fnamePNG)
 
 
 if __name__ == '__main__':
     #test = np.random.multinomial(10, [0.1, 0.2, 0.7])
-    T=26  # Simulation Timo Horizon [0, T]
-    simulationOP('example2022Nov20.csv', T)
+    T=11  # Simulation Timo Horizon [0, T]
+    simulationOP('tpre2024_triple_2025Jan', T)
     #simulation('tpre_2022Nov.csv', T)
     #simulation('d0_2022Nov.csv', T)
