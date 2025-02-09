@@ -100,11 +100,15 @@ def simulationOP(filename, T, DEBUG=True):
             if len(tableFeatures)>0:
                 CFactor_Init, AFactor_Init, BFactor_Init, DFactor_Init = readGroupCABD(tableFeatures, NumAgents, NumAgents)
             else:
-                tableFeatures, LowerIndex, UpperIndex = getData(filename, '&groupC')
+                tableFeatures, LowerIndex, UpperIndex = getData(filename, '&groupSABD')
                 if len(tableFeatures)>0:
-                    CFactor_Init = readGroupC(tableFeatures, NumAgents, NumAgents)
+                    CFactor_Init, AFactor_Init, BFactor_Init, DFactor_Init = readGroupCABD(tableFeatures, NumAgents, NumAgents)
                 else:
-                    CFactor_Init = np.zeros((NumAgents, NumAgents))
+                    tableFeatures, LowerIndex, UpperIndex = getData(filename, '&groupC')
+                    if len(tableFeatures)>0:
+                        CFactor_Init = readGroupC(tableFeatures, NumAgents, NumAgents)
+                    else:
+                        CFactor_Init = np.zeros((NumAgents, NumAgents))
 
             CArray = CFactor_Init
             PFactor = np.zeros((NumAgents, NumAgents))
@@ -113,8 +117,8 @@ def simulationOP(filename, T, DEBUG=True):
             for idai in range(NumAgents):
                 #if ai.inComp == 0:
                 #    continue
-                if np.sum(CFactor_Init[idai,:])>0:
-                    CArray[idai,:] = CArray[idai,:]/np.sum(CArray[idai,:])
+                if np.sum(np.fabs(CArray[idai,:]))>0:
+                    CArray[idai,:] = np.sign(CArray[idai,:])*np.fabs(CArray[idai,:])/np.sum(np.fabs(CArray[idai,:]))
                     for idaj in range(NumAgents):
                         if idaj == idai:
                             PFactor[idai,idaj] = 1-matrixP[idai,0]*np.sum(CArray[idai,:])
@@ -130,7 +134,10 @@ def simulationOP(filename, T, DEBUG=True):
             matrixWP = PFactor
 
         f = open("out.txt", "w+")
-
+        f.write("---------------------------------------------------------------------\n")
+        f.write("-------------------Opinion Dynamic Process-------------------\n")
+        f.write("---------------------------------------------------------------------\n")
+        f.write("Date&Time:"+time.strftime('%Y-%m-%d_%H_%M_%S')+"\n")
         f.write("matrixWP\n"+str(matrixWP)+"\n")
         f.write("matrixIS\n"+str(matrixIS)+"\n")
         f.write("Number of Agents:"+str(NumAgents))
@@ -170,7 +177,11 @@ def simulationOP(filename, T, DEBUG=True):
         print("----------------------------")
         print("eigen_values:", eigval)
         print("----------------------------")
-        
+
+        f.write("----------------------------------\n")
+        f.write("eigen_values:"+str(eigval)+"\n")
+        f.write("-----------------------------------\n")
+
         if DEBUG and sys.version_info[0] == 2: 
             print >> f, "Initial State: OPIN[:,0]\n", OPIN[:,0], "\n"
         if DEBUG and sys.version_info[0] == 2: 
@@ -218,7 +229,7 @@ def simulationOP(filename, T, DEBUG=True):
         np.save("dataResult.npy", OPIN)
         #plt.figure('data')
         for i in range(NumAgents):
-            plt.plot(OPIN[i,:], linewidth=2.0, label=str(i+1))
+            plt.plot(OPIN[i,:], linewidth=2.0, label=str(i))
             plt.text(0,OPIN[i,0], str(i), fontsize=18)
             
         (xDim, tDim)=np.shape(OPIN)
