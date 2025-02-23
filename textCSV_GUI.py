@@ -4,8 +4,6 @@
 #from tkinter import filedialog
 from functools import partial
 import re, sys, os
-from simulation import *
-from agent_model import *
 from opinion_model import *
 
 # Version Check
@@ -26,80 +24,6 @@ else:
     import tkFileDialog as tkf
     import tkMessageBox as msg
     
-'''
-class FindPopup(Toplevel):
-    def __init__(self, master):
-        super().__init__()
-        self.master = master
-    
-        self.title("Find in file")
-        self.center_window()
-        self.transient(master)
-        self.matches_are_highlighted = True
-    
-        self.main_frame = Frame(self, bg="lightgrey")
-        self.button_frame = Frame(self.main_frame, bg="lightgrey")
-        self.find_label = Label(self.main_frame, text="Find: ", bg="lightgrey", fg="black")
-        self.find_entry = Entry(self.main_frame, bg="white", fg="black")
-        self.find_button = Button(self.button_frame, text="Find All", bg="lightgrey", fg="black", command=self.find)
-        self.next_button = Button(self.button_frame, text="Next", bg="lightgrey", fg="black", command=self.jump_to_next_match)
-        self.cancel_button = Button(self.button_frame, text="Cancel", bg="lightgrey", fg="black", command=self.cancel)
-    
-        self.main_frame.pack(fill=BOTH, expand=1)
-        self.find_button.pack(side=LEFT, pady=(0,10), padx=(20,20))
-        self.next_button.pack(side=LEFT, pady=(0,10), padx=(15,20))
-        self.cancel_button.pack(side=LEFT, pady=(0,10), padx=(15,0))
-        self.button_frame.pack(side=BOTTOM, fill=BOTH)
-        self.find_label.pack(side=LEFT, fill=X, padx=(20,0))
-        self.find_entry.pack(side=LEFT, fill=X, expand=1, padx=(0,20))
-    
-        self.find_entry.focus_force()
-        self.find_entry.bind("<Return>", self.jump_to_next_match)
-        self.find_entry.bind("<KeyRelease>", self.matches_are_not_highlighted)
-        self.bind("<Escape>", self.cancel)
-        
-        self.protocol("WM_DELETE_WINDOW", self.cancel)
-
-    def find(self, event=None):
-        text_to_find = self.find_entry.get()
-        if text_to_find and not self.matches_are_highlighted:
-            self.master.remove_all_find_tags()
-        self.master.highlight_matches(text_to_find)
-        self.matches_are_highlighted = True
-    
-    def jump_to_next_match(self, event=None):
-        text_to_find = self.find_entry.get()
-        if text_to_find:
-            if not self.matches_are_highlighted:
-                self.find()
-            self.master.next_match()
-    
-    def cancel(self, event=None):
-        self.master.remove_all_find_tags()
-        self.destroy()
-    
-    def matches_are_not_highlighted(self, event):
-    
-        key_pressed = event.keysym
-        if not key_pressed == "Return":
-            self.matches_are_highlighted = False
-    
-    def center_window(self):
-        master_pos_x = self.master.winfo_x()
-        master_pos_y = self.master.winfo_y()
-    
-        master_width = self.master.winfo_width()
-        master_height = self.master.winfo_height()
-    
-        my_width = 300
-        my_height = 100
-    
-        pos_x = (master_pos_x + (master_width // 2)) - (my_width // 2)
-        pos_y = (master_pos_y + (master_height // 2)) - (my_height // 2)
-    
-        geometry = "{}x{}+{}+{}".format(my_width, my_height, pos_x, pos_y)
-        self.geometry(geometry)
-'''
 
 class Editor(object):
     def __init__(self):
@@ -126,7 +50,7 @@ class Editor(object):
             self.currentdir = None
 
         self.AUTOCOMPLETE_WORDS = ["stress", "fixed", "random", "auto", "True", "False"]
-        self.FONT_SIZE = 16
+        self.FONT_SIZE = 13
         #self.AUTOCOMPLETE_WORDS = ["def", "import", "if", "else", "while", "for","try:", "except:", "print(", "True", "False"]
         self.WINDOW_TITLE = "CSV Text Editor"
 
@@ -141,6 +65,7 @@ class Editor(object):
         self.file_menu.add_command(label="New", command=self.file_new, accelerator="Ctrl+N")
         self.file_menu.add_command(label="Open", command=self.file_open, accelerator="Ctrl+O")
         self.file_menu.add_command(label="Save", command=self.file_save, accelerator="Ctrl+S")
+        self.file_menu.add_command(label="SaveAs", command=self.file_save_as)
         
         self.edit_menu = Menu(self.menubar, tearoff=0, bg="lightgrey", fg="black")
         self.edit_menu.add_command(label="Cut", command=self.edit_cut, accelerator="Ctrl+X")
@@ -149,7 +74,7 @@ class Editor(object):
         self.edit_menu.add_command(label="Redo", command=self.edit_redo, accelerator="Ctrl+Y")
 
         self.py_menu = Menu(self.menubar, tearoff=0, bg="lightgrey", fg="black")
-        self.py_menu.add_command(label="runABS(Agent-Based Simulation)", command=self.pyrunABS, accelerator="F5")
+        #self.py_menu.add_command(label="runABS(Agent-Based Simulation)", command=self.pyrunABS, accelerator="F5")
         self.py_menu.add_command(label="runOpinionModel", command=self.pyrunOP, accelerator="F6")
 
 
@@ -163,9 +88,8 @@ class Editor(object):
         #self.line_numbers.configure(state="disabled")
         #self.line_numbers.pack(side=LEFT, fill=Y)
                 
-        self.main_text = Text(self.window, bg="white", fg="black", undo=True, cursor='arrow', font=("Times", self.FONT_SIZE))
+        self.main_text = Text(self.window, undo=True, bg="white", fg="black", font=("Times", self.FONT_SIZE))
         self.main_text.pack(expand=1, fill=BOTH)
-        self.main_text.focus_set()
         #self.main_text = Text(self.window, width=45,height=6, bg="brown", fg="lightcyan", wrap=WORD,font=("Courier",10))
         #self.main_text.pack(side=LEFT,fill=BOTH,expand=YES)
 
@@ -183,6 +107,7 @@ class Editor(object):
         #self.main_text.insert(END, 'Press arrow keys to move the entities vertically or horizonally in screen.\n')
         #self.main_text.insert(END, 'Press 1/2/3 in number panel (Right side in the keyboard) to display the door or exit data on the screen.\n')
         self.main_text.insert(END, 'Press <space> to pause or resume the simulaton. \n')
+
         '''
         if self.open_file:
             self.main_text.delete(1.0, END)
@@ -212,13 +137,8 @@ class Editor(object):
         self.window.bind("<Control-n>", self.file_new)
         
         self.window.bind("<Control-a>", self.select_all)
-        self.window.bind("<Control-f>", self.show_find_window)
-        
-        self.window.bind("<F5>", self.pyrunABS)
+        #self.window.bind("<F5>", self.pyrunABS)
         self.window.bind("<F6>", self.pyrunOP)
-        
-        self.cursor_id = None
-        self.show_cursor()
 
     '''
         self.main_text.bind("<MouseWheel>", self.scroll_text_and_line_numbers)
@@ -249,27 +169,13 @@ class Editor(object):
     
             self.main_text.yview_scroll(int(move), "units")
             self.line_numbers.yview_scroll(int(move), "units")
-    '''
-
-    def show_cursor(self, event=None):
-        # 移除旧的光标
-        if self.cursor_id is not None:
-            self.delete(self.cursor_id)
- 
-        # 插入光标标记
-        line, column = self.main_text.index("insert").split('.')
-        self.cursor_id = self.main_text.mark_set("cursor", "insert")
-        self.main_text.tag_add("cursor_tag", "cursor", "insert + 1c")
- 
-        # Update cursor position every 200ms
-        self.main_text.after(20, self.show_cursor)
 
 
     def pyrunABS(self, event=None):
         #os.system("python main.py "+self.open_file)
         simulation(self.open_file)
         
-        '''
+
         self.currentSimu = simulation()
         #self.currentSimu.ZOOMFACTOR = ZOOM
         #self.currentSimu.xSpace=xSpa
@@ -313,7 +219,7 @@ class Editor(object):
         T=None
         if os.path.exists(self.open_file):
             for line in open(self.open_file, "r"):
-                if re.match('&T', line):
+                if re.match('&TimeStep', line):
                     temp =  line.split('=')
                     T = int(temp[1].rstrip('\n').rstrip(',').strip()) 
         if T is None:
@@ -355,17 +261,43 @@ class Editor(object):
     def file_save(self, event=None):
         if not self.open_file:
             new_file_name = tkf.asksaveasfilename(filetypes=(("csv files", "*.csv"),("All files", "*.*")),\
-        initialdir=self.currentdir)
-            if new_file_name:
-                self.open_file = new_file_name
+            initialdir=self.currentdir)
+            self.open_file = new_file_name
         if self.open_file:
             #new_contents = self.main_text.get(1.0, END)
             #with open(self.open_file, "w") as open_file:
             #    open_file.write(new_contents)
             new_contents = self.main_text.get(1.0, END)
             new_contents2 = re.sub(',\t', ',', new_contents)
-            with open(self.open_file, "w") as open_file:
-                open_file.write(new_contents2)
+            try:
+                with open(self.open_file, "w") as open_file:
+                    open_file.write(new_contents2)
+                msg.showinfo('Info', 'File saved successfully')
+            except:
+                msg.showinfo('Info', 'Errors in saving files')
+            
+
+    def file_save_as(self, event=None):
+        #if not self.open_file:
+        new_file_name = tkf.asksaveasfilename(filetypes=(("csv files", "*.csv"),("All files", "*.*")),\
+        initialdir=self.currentdir)
+        if new_file_name:
+            self.open_file = new_file_name
+        if self.open_file:
+            #new_contents = self.main_text.get(1.0, END)
+            #with open(self.open_file, "w") as open_file:
+            #    open_file.write(new_contents)
+            new_contents = self.main_text.get(1.0, END)
+            new_contents2 = re.sub(',\t', ',', new_contents)
+            try:
+                with open(self.open_file, "w") as open_file:
+                    open_file.write(new_contents2)
+                msg.showinfo('Info', 'File saved successfully')
+                self.window.title(" - ".join([self.WINDOW_TITLE, self.open_file]))
+            except:
+                msg.showinfo('Info', 'Errors in saving files')
+
+                
 
     def select_all(self, event=None):
         self.main_text.tag_add("sel", 1.0, END)
@@ -483,54 +415,6 @@ class Editor(object):
         self.line_numbers.insert(1.0, line_number_string)
         self.line_numbers.configure(state="disabled")
     '''
-    
-    def show_find_window(self, event=None):
-        FindPopup(self)
-    
-    def highlight_matches(self, text_to_find):
-        self.main_text.tag_remove("findmatch", 1.0, END)
-        self.match_coordinates = []
-        self.current_match = -1
-    
-        find_regex = re.compile(text_to_find)
-        search_text_lines = self.main_text.get(1.0, END).split("\n")
-    
-        for line_number, line in enumerate(search_text_lines):
-            line_number += 1
-        for match in find_regex.finditer(line):
-            start, end = match.span()
-            start_index = ".".join([str(line_number), str(start)])
-            end_index = ".".join([str(line_number), str(end)])
-            self.main_text.tag_add("findmatch", start_index, end_index)
-            self.match_coordinates.append((start_index, end_index))
-    
-    def next_match(self, event=None):
-        try:
-            current_target, current_target_end = self.match_coordinates[self.current_match]
-            self.main_text.tag_remove("sel", current_target, current_target_end)
-            self.main_text.tag_add("findmatch", current_target, current_target_end)
-        except IndexError:
-            pass
-    
-        try:
-            self.current_match = self.current_match + 1
-            next_target, target_end = self.match_coordinates[self.current_match]
-        except IndexError:
-            if len(self.match_coordinates) == 0:
-                msg.showinfo("No Matches", "No Matches Found")
-            else:
-                if msg.askyesno("Wrap Search?", "Reached end of file. Continue from the top?"):
-                    self.current_match = -1
-                    self.next_match()
-                else:
-                    self.main_text.mark_set(INSERT, next_target)
-                    self.main_text.tag_remove("findmatch", next_target, target_end)
-                    self.main_text.tag_add("sel", next_target, target_end)
-                    self.main_text.see(next_target)
-    
-    def remove_all_find_tags(self):
-        self.main_text.tag_remove("findmatch", 1.0, END)
-        self.main_text.tag_remove("self", 1.0, END)
     
     def start(self):
         self.window.mainloop()
