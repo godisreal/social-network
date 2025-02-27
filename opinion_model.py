@@ -50,15 +50,17 @@ def simulationOP(filename, T, DEBUG=True):
 
         try: 
             dataIS, isStart, isEnd = getData(filename, "&inti")
-            dataP, pStart, pEnd = getData(filename, "&p")
-            #dataBLD, bldStart, bldEnd = getData(filename, "&bld")
             dataWP, wpStart, wpEnd = getData(filename, "&prob")
+            dataP, pStart, pEnd = getData(filename, "&p")
+            dataC, cStart, cEnd = getData(filename, "&groupC")
+
 
             print(dataIS)
             print(dataWP)
             print(dataP)
+            print(dataC)
 
-            NumAgents=np.size(dataIS)-1
+            NumAgents=len(dataIS)-1
 
             matrixIS=readFloatArray(dataIS, NumAgents, 1)
             if matrixIS.shape[0]!=NumAgents:
@@ -69,15 +71,42 @@ def simulationOP(filename, T, DEBUG=True):
             if np.shape(matrixWP)!= (NumAgents, NumAgents):
                 print('\nError on input parameter\n')
 
-            if dataP:
+            if len(dataP)>1 and len(dataC)>1 and len(dataP)==len(dataC):
+
                 matrixP=readFloatArray(dataP, NumAgents, 1)
                 if matrixP.shape[0]!=NumAgents:
                     print('\nError with matrixP\n')
 
-            print(matrixWP)
-            print(matrixIS)
-            if dataP:
-                print(matrixP)
+                CArray=readFloatArray(dataC, NumAgents, NumAgents)
+                if CArray.shape!=(NumAgents, NumAgents):
+                    print('\nError with CArray\n')
+
+                print("matrixP:\n", np.shape(matrixP), "\n", matrixP, "\n")
+                print("CArray:\n", np.shape(CArray), "\n", CArray, "\n")
+
+                PFactor = np.zeros((NumAgents, NumAgents))
+                print("CArray:\n", np.shape(CArray), "\n", CArray, "\n")
+                for idai in range(NumAgents):
+                    #if ai.inComp == 0:
+                    #    continue
+                    if np.sum(np.fabs(CArray[idai,:]))>0:
+                        CArray[idai,:] = np.sign(CArray[idai,:])*np.fabs(CArray[idai,:])/np.sum(np.fabs(CArray[idai,:]))
+                        for idaj in range(NumAgents):
+                            if idaj == idai:
+                                PFactor[idai,idaj] = 1-matrixP[idai,0]*np.sum(CArray[idai,:])
+                            else:
+                                PFactor[idai,idaj] = CArray[idai,idaj]*matrixP[idai,0]
+                    else:
+                        for idaj in range(NumAgents):
+                            if idaj == idai:
+                                PFactor[idai,idaj] = 1.0
+                            else:
+                                PFactor[idai,idaj] = 0.0
+                print("PFactor:\n", np.shape(PFactor), "\n", PFactor, "\n")
+                matrixWP = PFactor
+
+            print("matrixWP:\n", np.shape(matrixWP), "\n", matrixWP, "\n")
+            print("matrixIS:\n", np.shape(matrixIS), "\n", matrixIS, "\n")
 
         except:
 
@@ -113,7 +142,7 @@ def simulationOP(filename, T, DEBUG=True):
             CArray = CFactor_Init
             PFactor = np.zeros((NumAgents, NumAgents))
             print("CArray:\n", np.shape(CArray), "\n", CArray, "\n")
-            print("PFactor:\n", np.shape(PFactor), "\n", PFactor, "\n")
+            #print("PFactor:\n", np.shape(PFactor), "\n", PFactor, "\n")
             for idai in range(NumAgents):
                 #if ai.inComp == 0:
                 #    continue
@@ -127,7 +156,7 @@ def simulationOP(filename, T, DEBUG=True):
                 else:
                     for idaj in range(NumAgents):
                         if idaj == idai:
-                           PFactor[idai,idaj] = 1.0
+                            PFactor[idai,idaj] = 1.0
                         else:
                             PFactor[idai,idaj] = 0.0
             print("PFactor:\n", np.shape(PFactor), "\n", PFactor, "\n")

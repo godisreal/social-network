@@ -16,13 +16,7 @@
 # Email: wp2204@gmail.com
 
 import sys, os
-import pygame
-import pygame.draw
 import numpy as np
-#from agent_model_obst3 import *
-#from agent_model import *
-#from obst import *
-#from passage import *
 #from math_func import *
 from math import *
 #from config import *
@@ -371,48 +365,6 @@ def readSocialArrayCSV(FileName, debug=True, marginTitle=1):
     if debug:
         print ('Number of AgentGroup:', Num_AgentGroup, '\n')
         print ('Features of AgentGroup\n', agentgroupFeatures, "\n")
-
-    '''
-    obstFeatures, lowerIndex, upperIndex = getData(FileName, '&Wall')
-    Num_Obsts=len(obstFeatures)-marginTitle
-    if Num_Obsts <= 0:
-        obstFeatures, lowerIndex, upperIndex = getData(FileName, '&wall')
-        Num_Obsts=len(obstFeatures)-marginTitle
-
-    if debug:
-        print ('Number of Walls:', Num_Obsts, '\n')
-        print ("Features of Walls\n", obstFeatures, "\n")
-
-    exitFeatures, lowerIndex, upperIndex = getData(FileName, '&Exit')
-    Num_Exits=len(exitFeatures)-marginTitle
-    if Num_Exits <= 0:
-        exitFeatures, lowerIndex, upperIndex = getData(FileName, '&exit')
-        Num_Exits=len(exitFeatures)-marginTitle
-        
-    if debug: 
-        print ('Number of Exits:', Num_Exits, '\n')
-        print ("Features of Exits\n", exitFeatures, "\n")
-
-    doorFeatures, lowerIndex, upperIndex = getData(FileName, '&Door')
-    Num_Doors=len(doorFeatures)-marginTitle
-    if Num_Doors <= 0:
-        doorFeatures, lowerIndex, upperIndex = getData(FileName, '&door')
-        Num_Doors=len(doorFeatures)-marginTitle
-        
-    if debug:
-        print ('Number of Doors:', Num_Doors, '\n')
-        print ('Features of Doors\n', doorFeatures, "\n")
-        
-    exit2doorFeatures, lowerIndex, upperIndex = getData(FileName, '&Exit2Door')
-    Num_Exit2Door=len(exit2doorFeatures)-marginTitle
-    if Num_Exit2Door <= 0:
-        exit2doorFeatures, lowerIndex, upperIndex = getData(FileName, '&exit2door')
-        Num_Exit2Door=len(doorFeatures)-marginTitle
-
-    if debug:
-        print ('Number of Exit2Door:', Num_Exit2Door, '\n')
-        print ('Features of Exit2Door\n', exit2doorFeatures, "\n")
-    '''
 
     return agentFeatures, agent2exitFeatures, agentgroupFeatures #, obstFeatures, exitFeatures, doorFeatures, exit2doorFeatures
 
