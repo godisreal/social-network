@@ -65,11 +65,12 @@ def simulationOP(filename, T, DEBUG=True):
             matrixIS=readFloatArray(dataIS, NumAgents, 1)
             if matrixIS.shape[0]!=NumAgents:
                 print('\nError with matrixIS\n')
-                    
-            matrixWP=readFloatArray(dataWP, NumAgents, NumAgents)
-            # %%%% Input parameter check
-            if np.shape(matrixWP)!= (NumAgents, NumAgents):
-                print('\nError on input parameter\n')
+
+            if len(dataWP)>1:
+                matrixWP=readFloatArray(dataWP, NumAgents, NumAgents)
+                # %%%% Input parameter check
+                if np.shape(matrixWP)!= (NumAgents, NumAgents):
+                    print('\nError on input parameter\n')
 
             if len(dataP)>1 and len(dataC)>1 and len(dataP)==len(dataC):
 
@@ -170,8 +171,11 @@ def simulationOP(filename, T, DEBUG=True):
         f.write("matrixWP\n"+str(matrixWP)+"\n")
         f.write("matrixIS\n"+str(matrixIS)+"\n")
         f.write("Number of Agents:"+str(NumAgents))
-        if dataP:
+        try:
             f.write("matrixP\n"+str(matrixP)+"\n")
+            f.write("matrixC\n"+str(CArray)+"\n")
+        except:
+            f.write("No matrixP or CArray defined! \n")
 
         if DEBUG and sys.version_info[0] == 2:
             raw_input('Please check input data here!')
@@ -188,8 +192,8 @@ def simulationOP(filename, T, DEBUG=True):
 
         OPIN[:,0] = matrixIS.reshape((1,-1))
 
-        numOfAgent = len(matrixIS)
-        print("Number of Agent:", numOfAgent)
+        #numOfAgent = len(matrixIS)
+        print("Number of Agent:", NumAgents)
         print("Initial State of Agents:")
         print(OPIN[:,0])
         print(matrixIS)

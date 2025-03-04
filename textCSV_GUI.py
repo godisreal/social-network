@@ -34,7 +34,7 @@ class Editor(object):
                 #if re.match('FN_FDS', line):
                 #    temp =  line.split('=')
                 #    FN_FDS = temp[1].strip()
-                if re.match('FN_EVAC', line):
+                if re.match('FN', line):
                     temp =  line.split('=')
                     self.open_file = temp[1].strip()
                     
@@ -169,48 +169,6 @@ class Editor(object):
     
             self.main_text.yview_scroll(int(move), "units")
             self.line_numbers.yview_scroll(int(move), "units")
-
-
-    def pyrunABS(self, event=None):
-        #os.system("python main.py "+self.open_file)
-        simulation(self.open_file)
-        
-
-        self.currentSimu = simulation()
-        #self.currentSimu.ZOOMFACTOR = ZOOM
-        #self.currentSimu.xSpace=xSpa
-        #self.currentSimu.ySpace=ySpa
-
-        self.currentSimu.readconfig()
-            
-        self.currentSimu.preprocessAgent()
-        sunpro2 = mp.Process(target=show_geom(self.currentSimu)) 
-        sunpro2.start()
-        #sunpro2.join()
-        if self.currentSimu.continueToSimu:
-            #self.currentSimu.preprocessGeom()
-            #self.currentSimu.preprocessAgent()
-            #self.currentSimu.flowMesh()
-            self.currentSimu.preprocessGeom()
-            self.currentSimu.preprocessAgent()
-            if len(self.currentSimu.exits)>0 and self.currentSimu.solver!=0:
-                self.currentSimu.buildMesh()
-                self.currentSimu.flowMesh()
-                self.currentSimu.computeDoorDirection()
-            else:
-                self.currentSimu.solver=0
-            #if self.currentSimu.solver!=0:
-                #show_flow(self.currentSimu)
-            self.currentSimu.dataSummary()
-            sunpro1 = mp.Process(target=show_simu(self.currentSimu))
-            #sunpro1 = mp.Process(target=self.currentSimu.flowMesh())
-            sunpro1.start()
-            sunpro1.join()
-            
-            self.currentSimu.dataComplete()
-            #if self.AutoPlot_Var.get():
-            #    self.currentSimu.autoPlot()
-            self.currentSimu.quit()
         '''
 
     def pyrunOP(self, event=None):
@@ -244,6 +202,14 @@ class Editor(object):
             self.open_file = file_to_open
             self.main_text.delete(1.0, END)
             self.currentdir = os.path.dirname(self.open_file)
+            if os.path.exists("log.txt"):
+                f = open("log.txt", "w+")
+                f.write("---------------------------------------------------------------------\n")
+                f.write("-------------------Opinion Dynamic Process-------------------\n")
+                f.write("---------------------------------------------------------------------\n")
+                f.write("Date&Time:"+time.strftime('%Y-%m-%d_%H_%M_%S')+"\n")
+                f.write("FN="+str(self.open_file))
+                f.write("\n\n")
 
             with open(file_to_open, "r") as file_contents:
                 file_lines = file_contents.readlines()
@@ -296,8 +262,6 @@ class Editor(object):
                 self.window.title(" - ".join([self.WINDOW_TITLE, self.open_file]))
             except:
                 msg.showinfo('Info', 'Errors in saving files')
-
-                
 
     def select_all(self, event=None):
         self.main_text.tag_add("sel", 1.0, END)
