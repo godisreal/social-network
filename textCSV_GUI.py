@@ -75,8 +75,8 @@ class Editor(object):
 
         self.py_menu = Menu(self.menubar, tearoff=0, bg="lightgrey", fg="black")
         #self.py_menu.add_command(label="runABS(Agent-Based Simulation)", command=self.pyrunABS, accelerator="F5")
-        self.py_menu.add_command(label="runOpinionModel", command=self.pyrunOP, accelerator="F6")
-
+        self.py_menu.add_command(label="runOpinionModel", command=self.pyrunOP, accelerator="F5")
+        self.py_menu.add_command(label="Data2GroupC", command=self.transData, accelerator="F6")
 
         self.menubar.add_cascade(label="File", menu=self.file_menu)
         self.menubar.add_cascade(label="Edit", menu=self.edit_menu)
@@ -99,14 +99,13 @@ class Editor(object):
         scrollInfo.config(command=self.main_text.yview)
         
         self.main_text.config(yscrollcommand=scrollInfo.set)
-        self.main_text.insert(END, 'QuickStart: \nStep1: Please select csv file to read in agent data and compartement geometry data!\n')
+        self.main_text.insert(END, 'QuickStart: \nStep1: Please select csv file to read in agent data!\n')
         self.main_text.insert(END, 'Step2: Compute and visualize simulation!\n')
-        self.main_text.insert(END, '\nWhen simulation starts, please try to press the following keys in your keybroad, and you will see the effects on the screen. \n')
-
-        self.main_text.insert(END, 'Press <pageup/pagedown> to zoom in or zoom out.\n')
+        #self.main_text.insert(END, '\nWhen simulation starts, please try to press the following keys in your keybroad, and you will see the effects on the screen. \n')
+        #self.main_text.insert(END, 'Press <pageup/pagedown> to zoom in or zoom out.\n')
         #self.main_text.insert(END, 'Press arrow keys to move the entities vertically or horizonally in screen.\n')
         #self.main_text.insert(END, 'Press 1/2/3 in number panel (Right side in the keyboard) to display the door or exit data on the screen.\n')
-        self.main_text.insert(END, 'Press <space> to pause or resume the simulaton. \n')
+        #self.main_text.insert(END, 'Press <space> to pause or resume the simulaton. \n')
 
         '''
         if self.open_file:
@@ -138,7 +137,7 @@ class Editor(object):
         
         self.window.bind("<Control-a>", self.select_all)
         #self.window.bind("<F5>", self.pyrunABS)
-        self.window.bind("<F6>", self.pyrunOP)
+        self.window.bind("<F5>", self.pyrunOP)
 
     '''
         self.main_text.bind("<MouseWheel>", self.scroll_text_and_line_numbers)
@@ -193,6 +192,34 @@ class Editor(object):
             self.open_file = file_name
             self.main_text.delete(1.0, END)
             self.title(" - ".join([self.WINDOW_TITLE, self.open_file]))
+
+
+    def transData(self, event=None):
+        if self.open_file is None:
+            msg.showinfo('Info', 'Please open an input csv file first!')
+            return
+        else:
+            dataIS, isStart, isEnd = getData(self.open_file, "&inti")
+            dataWP, wpStart, wpEnd = getData(self.open_file, "&prob")
+  
+            print(dataIS)
+            print(dataWP)
+
+            NumAgents=len(dataIS)-1
+
+            matrixIS=readFloatArray(dataIS, NumAgents, 1)
+            if matrixIS.shape[0]!=NumAgents:
+                print('\nError with matrixIS\n')
+            if len(dataWP)>1:
+                matrixWP=readFloatArray(dataWP, NumAgents, NumAgents)
+                # %%%% Input parameter check
+                if np.shape(matrixWP)!= (NumAgents, NumAgents):
+                    print('\nError on input parameter\n')
+            dataC, dataP = wp2groupC(matrixWP)
+            print(dataC, dataP)
+            self.main_text.insert(END, str(dataC)+'\n')
+            self.main_text.insert(END, str(dataP)+'\n')
+            
 
     def file_open(self, event=None):
         file_to_open = tkf.askopenfilename(filetypes=(("csv files", "*.csv"),("All files", "*.*")),\

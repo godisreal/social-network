@@ -37,6 +37,105 @@ except:
 
 
 
+def wp2groupC(WPMatrix):
+    
+    print('\n')
+    print('#=======================#')
+    dataArray = np.array(WPMatrix)
+    print (dataArray)
+    print('np.shape(dataArray)', np.shape(dataArray))
+    print('\n')
+
+    (I, J) = np.shape(dataArray)
+    if I != J:
+        print("Wrong input data in WPMatrix because I!=J (Not a square matrix). \n")
+        print("Problem found in input matrix: Number of rows is not equal to number of columns.")
+        if sys.version_info[0] == 2: 
+            raw_input("Please check!")
+        else:
+            input("please check!")
+        return "Wrong input data!"
+        
+    groupC = np.zeros((I, J)) #groupC = np.zeros((I, I))
+    ppp = np.zeros((I,))
+    
+    for i in range(I):
+        
+        ppp[i] = np.sum(np.fabs(dataArray[i,:]))-np.fabs(dataArray[i,i])
+        if ppp[i]<0 or ppp[i]>1.0:
+            print("Wrong input data in WPMatrix because p is not in range of [0,1] \n")
+            print("Problem found in row "+str(i)+" of input matrix!")
+            if sys.version_info[0] == 2: 
+                raw_input("Please check!")
+            else:
+                input("please check!")
+            return "Wrong input data!"
+            
+        for j in range(J):
+            if ppp[i]==0:
+                # Isolate Agent!
+                print("Isolate Agent!")
+                if i==j:
+                    groupC[i,i]=1.0
+                else:
+                    groupC[i,j]=0.0
+            else:
+                # Normal Agent!
+                if i==j:
+                    groupC[i,i]=0.0
+                else:
+                    groupC[i,j]=dataArray[i,j]/ppp[i]
+                    
+    return groupC, ppp
+
+
+# This function is not used in this program
+def readCSV(fileName, mode='float'):
+    
+    # read .csv file
+    csvFile = open(fileName, "r")
+    reader = csv.reader(csvFile)
+    strData = []
+    for item in reader:
+        #print(item)
+        strData.append(item)
+
+    #print(strData)
+    #print('np.shape(strData)=', np.shape(strData))
+    #print('\n')
+
+    print('\n')
+    print('#=======================#')
+    print(fileName)
+    dataNP = np.array(strData)
+    print (dataNP)
+    print('np.shape(dataNP)', np.shape(dataNP))
+    print('\n')
+
+    #print(strData[1:,1:])
+    csvFile.close()	
+    
+    if mode=='string':
+        print (dataNP[1:, 1:])
+        return dataNP[1:, 1:]
+	
+    if mode=='float':
+        
+        #print dataNP[1:, 1:]
+        (I, J) = np.shape(dataNP)
+        #print "The size of tha above matrix:", [I, J]
+        #print "The effective data size:", [I-1, J-1]
+        matrix = np.zeros((I, J))
+        #print matrix
+
+        for i in range(1,I):
+            for j in range(1,J):
+                matrix[i,j] = float(dataNP[i,j])
+
+    print (matrix[1:, 1:])
+    return matrix[1:, 1:]
+
+
 def readCSV_base(fileName):
     
     # read .csv file
@@ -102,53 +201,6 @@ def getData(fileName, strNote):
 
     #data_result = np.array(dataOK)
     #return data_result[1:, 1:]
-    
-
-# This function is not used in this program
-def readCSV(fileName, mode='float'):
-    
-    # read .csv file
-    csvFile = open(fileName, "r")
-    reader = csv.reader(csvFile)
-    strData = []
-    for item in reader:
-        #print(item)
-        strData.append(item)
-
-    #print(strData)
-    #print('np.shape(strData)=', np.shape(strData))
-    #print('\n')
-
-    print('\n')
-    print('#=======================#')
-    print(fileName)
-    dataNP = np.array(strData)
-    print (dataNP)
-    print('np.shape(dataNP)', np.shape(dataNP))
-    print('\n')
-
-    #print(strData[1:,1:])
-    csvFile.close()	
-    
-    if mode=='string':
-        print (dataNP[1:, 1:])
-        return dataNP[1:, 1:]
-	
-    if mode=='float':
-        
-        #print dataNP[1:, 1:]
-        (I, J) = np.shape(dataNP)
-        #print "The size of tha above matrix:", [I, J]
-        #print "The effective data size:", [I-1, J-1]
-        matrix = np.zeros((I, J))
-        #print matrix
-
-        for i in range(1,I):
-            for j in range(1,J):
-                matrix[i,j] = float(dataNP[i,j])
-
-    print (matrix[1:, 1:])
-    return matrix[1:, 1:]
     
 
 def arr1D_2D(data, debug=True):
