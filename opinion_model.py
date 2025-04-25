@@ -18,7 +18,7 @@
 
 import numpy as np
 import random
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import csv
 from data_func import *
 #from RandomFlow import *
@@ -28,6 +28,15 @@ try:
     import matplotlib.pyplot as plt
 except:
     print("Warning: matplotlib cannot be imported.  Unable to plot figures!")
+    if sys.version_info[0] == 2: 
+        raw_input("Please check!")
+    else:
+        input("please check!")
+
+try:
+    import networkx
+except:
+    print("Warning: networkx cannot be imported.  Unable to draw graph model!")
     if sys.version_info[0] == 2: 
         raw_input("Please check!")
     else:

@@ -25,6 +25,25 @@ else:
     import tkMessageBox as msg
     
 
+try:
+    import matplotlib.pyplot as plt
+except:
+    print("Warning: matplotlib cannot be imported.  Unable to plot figures!")
+    if sys.version_info[0] == 2: 
+        raw_input("Please check!")
+    else:
+        input("please check!")
+
+try:
+    import networkx
+except:
+    print("Warning: networkx cannot be imported.  Unable to draw graph model!")
+    if sys.version_info[0] == 2: 
+        raw_input("Please check!")
+    else:
+        input("please check!")
+        
+
 class Editor(object):
     def __init__(self):
         
@@ -77,6 +96,7 @@ class Editor(object):
         #self.py_menu.add_command(label="runABS(Agent-Based Simulation)", command=self.pyrunABS, accelerator="F5")
         self.py_menu.add_command(label="runOpinionModel", command=self.pyrunOP, accelerator="F5")
         self.py_menu.add_command(label="Data2GroupC", command=self.transData, accelerator="F6")
+        self.py_menu.add_command(label="DrawSocialTopology", command=self.drawGraph, accelerator="F7")
 
         self.menubar.add_cascade(label="File", menu=self.file_menu)
         self.menubar.add_cascade(label="Edit", menu=self.edit_menu)
@@ -217,9 +237,82 @@ class Editor(object):
                     print('\nError on input parameter\n')
             dataC, dataP = wp2groupC(matrixWP)
             print(dataC, dataP)
+
+            self.main_text.insert(END, '\n&groupC\n')
             self.main_text.insert(END, str(dataC)+'\n')
+            self.main_text.insert(END, '\n&p\n')
             self.main_text.insert(END, str(dataP)+'\n')
             
+
+    def drawGraph(self, event=None):
+        if self.open_file is None:
+            msg.showinfo('Info', 'Please open an input csv file first!')
+            return
+        else:
+            dataIS, isStart, isEnd = getData(self.open_file, "&inti")
+            dataWP, wpStart, wpEnd = getData(self.open_file, "&prob")
+            dataP, pStart, pEnd = getData(self.open_file, "&p")
+            dataC, cStart, cEnd = getData(self.open_file, "&groupC")
+
+            print(dataIS)
+            print(dataWP)
+            print(dataP)
+            print(dataC)
+
+            NumAgents=len(dataIS)-1
+
+            matrixIS=readFloatArray(dataIS, NumAgents, 1)
+            if matrixIS.shape[0]!=NumAgents:
+                print('\nError with matrixIS\n')
+
+            if len(dataWP)>1:
+                matrixWP=readFloatArray(dataWP, NumAgents, NumAgents)
+                # %%%% Input parameter check
+                if np.shape(matrixWP)!= (NumAgents, NumAgents):
+                    print('\nError on input parameter\n')
+
+            if len(dataP)>1 and len(dataC)>1 and len(dataP)==len(dataC):
+
+                matrixP=readFloatArray(dataP, NumAgents, 1)
+                if matrixP.shape[0]!=NumAgents:
+                    print('\nError with matrixP\n')
+
+                CArray=readFloatArray(dataC, NumAgents, NumAgents)
+                if CArray.shape!=(NumAgents, NumAgents):
+                    print('\nError with CArray\n')
+
+                print("matrixP:\n", np.shape(matrixP), "\n", matrixP, "\n")
+                print("CArray:\n", np.shape(CArray), "\n", CArray, "\n")
+
+                PFactor = np.zeros((NumAgents, NumAgents))
+                print("CArray:\n", np.shape(CArray), "\n", CArray, "\n")
+                for idai in range(NumAgents):
+                    #if ai.inComp == 0:
+                    #    continue
+                    if np.sum(np.fabs(CArray[idai,:]))>0:
+                        CArray[idai,:] = np.sign(CArray[idai,:])*np.fabs(CArray[idai,:])/np.sum(np.fabs(CArray[idai,:]))
+                        for idaj in range(NumAgents):
+                            if idaj == idai:
+                                PFactor[idai,idaj] = 1-matrixP[idai,0]*np.sum(CArray[idai,:])
+                            else:
+                                PFactor[idai,idaj] = CArray[idai,idaj]*matrixP[idai,0]
+                    else:
+                        for idaj in range(NumAgents):
+                            if idaj == idai:
+                                PFactor[idai,idaj] = 1.0
+                            else:
+                                PFactor[idai,idaj] = 0.0
+                print("PFactor:\n", np.shape(PFactor), "\n", PFactor, "\n")
+                matrixWP = PFactor
+
+            print("matrixWP:\n", np.shape(matrixWP), "\n", matrixWP, "\n")
+            print("matrixIS:\n", np.shape(matrixIS), "\n", matrixIS, "\n")
+
+            adj_matrix  = matrixWP
+            G = networkx.from_numpy_matrix(adj_matrix)
+            networkx.draw(G, with_labels =True)
+            plt.show()
+
 
     def file_open(self, event=None):
         file_to_open = tkf.askopenfilename(filetypes=(("csv files", "*.csv"),("All files", "*.*")),\
