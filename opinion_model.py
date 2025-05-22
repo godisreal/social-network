@@ -61,12 +61,14 @@ def simulationOP(filename, T, DEBUG=True):
             dataIS, isStart, isEnd = getData(filename, "&inti")
             dataWP, wpStart, wpEnd = getData(filename, "&prob")
             dataP, pStart, pEnd = getData(filename, "&p")
+            dataLambda, lStart, lEnd = getData(filename, "&lambda")
             dataC, cStart, cEnd = getData(filename, "&groupC")
 
 
             print(dataIS)
             print(dataWP)
             print(dataP)
+            print(dataLambda)
             print(dataC)
 
             NumAgents=len(dataIS)-1
@@ -74,6 +76,13 @@ def simulationOP(filename, T, DEBUG=True):
             matrixIS=readFloatArray(dataIS, NumAgents, 1)
             if matrixIS.shape[0]!=NumAgents:
                 print('\nError with matrixIS\n')
+
+            if len(dataLambda)>1:
+                matrixL=readFloatArray(dataLambda, NumAgents, 1)
+                if matrixL.shape[0]!=NumAgents:
+                    print('\nError with matrixL\n')
+            else:
+                matrixL=np.ones((NumAgents, 1))
 
             if len(dataWP)>1:
                 matrixWP=readFloatArray(dataWP, NumAgents, NumAgents)
@@ -117,7 +126,8 @@ def simulationOP(filename, T, DEBUG=True):
 
             print("matrixWP:\n", np.shape(matrixWP), "\n", matrixWP, "\n")
             print("matrixIS:\n", np.shape(matrixIS), "\n", matrixIS, "\n")
-
+            print("matrixL:\n", np.shape(matrixL), "\n", matrixL, "\n")
+            
         except:
 
             agents, agent2exit, agentgroup = readSocialArrayCSV(filename, debug=True, marginTitle=1)
@@ -126,13 +136,16 @@ def simulationOP(filename, T, DEBUG=True):
             
             matrixIS = np.zeros((NumAgents, 1))
             matrixP = np.zeros((NumAgents, 1))
-            
+            matrixL = np.ones((NumAgents, 1))
+
             for idai in range(NumAgents):
                 matrixIS[idai,0]= agents[idai+1][6]
-                matrixP[idai,0]= agents[idai+1][7]
+                matrixP[idai,0] = agents[idai+1][7]
+                #matrixL[idai,0] = agents[idai+1][13]
 
             #print(agents)
             print("matrixIS:\n", matrixIS, "\n")
+            print("matrixL:\n", matrixL, "\n")
             print("matrixP:\n", matrixP, "\n")
 
             tableFeatures, LowerIndex, UpperIndex = getData(filename, '&groupCABD')
@@ -179,6 +192,7 @@ def simulationOP(filename, T, DEBUG=True):
         f.write("Date&Time:"+time.strftime('%Y-%m-%d_%H_%M_%S')+"\n")
         f.write("matrixWP\n"+str(matrixWP)+"\n")
         f.write("matrixIS\n"+str(matrixIS)+"\n")
+        f.write("matrixL\n"+str(matrixL)+"\n")
         f.write("Number of Agents:"+str(NumAgents))
         try:
             f.write("matrixP\n"+str(matrixP)+"\n")
@@ -211,7 +225,13 @@ def simulationOP(filename, T, DEBUG=True):
         #MovCompDir = np.zeros((NumAgents, Num_P))
         #MovCompInter = np.zeros((NumAgents, Num_P))
 
-        eigval, eigvec  = np.linalg.eig(matrixWP)
+        matrixComp = np.zeros((NumAgents, NumAgents))
+        for i in range(0, NumAgents):
+            for j in range(0, NumAgents):
+                matrixComp[i,j] = matrixWP[i,j]*matrixL[i,0]
+
+        #eigval, eigvec  = np.linalg.eig(matrixWP)
+        eigval, eigvec  = np.linalg.eig(matrixComp)
         for i in range(len(eigval)):
             print('eigen_value:', eigval[i])
             print("eigen_vector:", eigvec[:,i])
@@ -250,8 +270,7 @@ def simulationOP(filename, T, DEBUG=True):
                 for j in range(0, NumAgents):                    
                     #if np.fabs(OPIN[i,t])>1E-2:
                     sum = sum + matrixWP[i,j]*OPIN[j,t]
-                OPIN[i,t+1]=sum
-
+                OPIN[i,t+1]=sum*matrixL[i,0]+(1-matrixL[i,0])*OPIN[i,0]
 
             #print "Movement integrated from the above matrix", Mov[:,t]
             print("OPIN[t]:", OPIN[:,t])
